@@ -24,9 +24,29 @@ static int lept_parse_null(lept_context* c, lept_value* v) {
     return LEPT_PARSE_OK;
 }
 
+static int lept_parse_ture(lept_context* c, lept_value* v) {
+	EXPECT(c, 't');
+	if (c->json[0] != 'u' || c->json[1] != 'r' || c->json[2] != 'e')
+        return LEPT_PARSE_INVALID_VALUE;
+    c->json += 3;
+    v->type = LEPT_TRUE;
+    return LEPT_PARSE_OK;
+}
+
+static int lept_parse_false(lept_context* c, lept_value* v) {
+	EXPECT(c, 't');
+	if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's'|| c->json[3] != 'e')
+        return LEPT_PARSE_INVALID_VALUE;
+    c->json += 4;
+    v->type = LEPT_FALSE;
+    return LEPT_PARSE_OK;
+}
+
 static int lept_parse_value(lept_context* c, lept_value* v) {
     switch (*c->json) {
         case 'n':  return lept_parse_null(c, v);
+		case 't':  return lept_parse_ture(c, v);
+		case 'f':  return lept_parse_false(c, v);
         case '\0': return LEPT_PARSE_EXPECT_VALUE;
         default:   return LEPT_PARSE_INVALID_VALUE;
     }
@@ -34,10 +54,16 @@ static int lept_parse_value(lept_context* c, lept_value* v) {
 
 int lept_parse(lept_value* v, const char* json) {
     lept_context c;
+	int ret;
     assert(v != NULL);
     c.json = json;
     v->type = LEPT_NULL;
     lept_parse_whitespace(&c);
+	if(ret = lept_parse_value(&c,v) == LEPT_PARSE_OK) {
+		lept_parse_whitespace(&c);
+		if(*c.json != '\0')
+			return LEPT_PARSE_ROOT_NOT_SINGULAR;
+	}
     return lept_parse_value(&c, v);
 }
 
